@@ -1,0 +1,66 @@
+- hosts: all
+  vars_files:
+    - ../vars/external_vars.yml
+  tasks:
+    - name: Create activemq user
+      become : yes
+      user:
+        name: "{{ activemq_user }}"
+        shell: /bin/bash
+
+    - name: Create activemq folder
+      become : yes
+      file:
+        path: "{{ deploy_dir }}/activemq"
+        state: directory
+        mode: 0755
+        owner: "{{ activemq_user }}"
+        group: "{{ activemq_group }}"
+
+    - name: Untar Apache activemq
+      unarchive:
+        src: "{{ files_path }}/downloaded/apache-activemq-5.15.6-bin.tar.gz"
+        dest: "{{ deploy_dir }}/activemq"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+        creates: "{{ deploy_dir }}/activemq/bin/activemq"
+      become_user: "{{ activemq_user }}"
+      become: yes
+
+    - name: Copy activemq init script
+      become : yes
+      copy:
+        src: '{{ files_path }}/configuration/misc/activemq'
+        dest: "/etc/init.d/activemq"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0754
+
+    - name: Configure activemq init script (activemq_dir)
+      become : yes
+      replace:
+        path: "/etc/init.d/activemq"
+        regexp: "@@ansible_activemq_dir@@"
+        replace: "{{ deploy_dir }}/activemq"
+
+    - name: Configure activemq init script (activemq_user)
+      become : yes
+      replace:
+        path: "/etc/init.d/activemq"
+        regexp: "@@ansible_activemq_user@@"
+        replace: "{{ activemq_user }}"
+
+    - name: Add JAVA_HOME to activemq env file
+      become : yes
+      become_user: "{{ activemq_user }}"    
+      lineinfile:
+        path: "/opt/activemq/bin/env"
+        line: "JAVA_HOME={{ activemq_java_home }}"
+
+    - name: Enable Activemq as a service
+      become : yes
+      service:
+        name: activemq
+        enabled: yes
+

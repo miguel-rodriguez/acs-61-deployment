@@ -1,0 +1,97 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "vpc_region": "",
+    "vpc_id": "",
+    "vpc_public_sn_id": "",
+    "source_ami": "",
+    "instance_type": "",
+    "ssh_username": "",
+    "nexus_user": "{{env `nexus_user`}}",
+    "nexus_password": "{{env `nexus_password`}}"
+  },
+  "sensitive-variables": ["nexus_user", "nexus_password"],
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "",
+      "secret_key": "",
+      "region": "{{user `vpc_region`}}",
+      "vpc_id": "{{user `vpc_id`}}",
+      "subnet_id": "",
+      "associate_public_ip_address": false,
+      "security_group_id": "",
+      "source_ami": "{{user `source_ami`}}",
+      "instance_type": "{{user `instance_type`}}",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ami_name": "{{user `ami_name`}}-{{ timestamp }}",
+      "ami_groups": "",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_type": "gp2",
+          "volume_size": "30",
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell-local",
+      "command": "tar cvf acs-61-files.tar acs-61-files"
+    },
+    {
+      "destination": "/tmp/",
+      "source": "./acs-61-files.tar",
+      "type": "file",
+      "generated": "true"
+    },
+    {
+      "type": "shell",
+      "inline": "sudo tar xvf /tmp/acs-61-files.tar -C /tmp"
+    },
+    {
+      "type": "shell",
+      "inline": "sudo chmod -R o+rwx /tmp/acs-61-files"
+    },
+    {
+      "type": "shell-local",
+      "command": "rm acs-61-files.tar"
+    },
+    {
+      "type": "shell",
+      "inline": "sudo yum -y install ansible"
+    },
+    {
+      "type": "ansible-local",
+      "playbook_dir": "acs-61-files/ansible",
+      "playbook_file": "acs-61-files/ansible/download-files.yaml",
+      "extra_arguments": [
+        "--extra-vars \"nexus_user={{ user `nexus_user` }} nexus_password={{ user `nexus_password` }}\""
+      ]
+    },     
+    {
+      "type": "ansible-local",
+      "playbook_dir": "acs-61-files/ansible",
+      "playbook_paths" : ["acs-61-files/ansible/tasks","acs-61-files/ansible/vars"],
+      "playbook_file": "acs-61-files/ansible/alfresco-instance.yaml"
+    },
+    {
+      "type": "shell",
+      "inline": "sudo rm -rf /tmp/acs-61-files*"
+    },   
+    {
+      "type": "shell",
+      "inline": "sudo rm -rf /tmp/packer-provisioner-ansible-local"
+    }    
+  ],
+  "post-processors": [
+    {
+      "type": "manifest",
+      "output": "manifest.json",
+      "strip_path": true
+    }
+  ]
+}

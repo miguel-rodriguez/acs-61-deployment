@@ -1,0 +1,2 @@
+[virtualbox-server]
+virtualbox ansible_host=192.168.56.33 ansible_python_interpreter=/usr/bin/python2.7 ansible_connection=ssh

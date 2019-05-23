@@ -1,0 +1,148 @@
+- hosts: all
+  vars_files:
+    - ../vars/external_vars.yml
+  tasks:
+    - name: Unzip Insight Engine
+      unarchive:
+        src: "{{ files_path }}/downloaded/alfresco-insight-engine-distribution-1.0.0.zip"
+        dest: "{{ files_path }}/downloaded"
+        remote_src: yes
+        owner: alfresco
+        group: alfresco
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy alfresco-insight-engine folder
+      become: yes
+      synchronize:
+        src: '{{ files_path }}/downloaded/alfresco-insight-engine'
+        dest: "{{ deploy_dir }}"
+        owner: yes
+        group: yes
+        recursive: yes
+      delegate_to: "{{ inventory_hostname }}"
+      
+    - name: Configure solr.in.sh (SOLR_JAVA_HOME)
+      become: yes
+      replace:
+        path: "{{ deploy_dir }}/alfresco-insight-engine/solr.in.sh"
+        regexp: "^#SOLR_JAVA_HOME.*"
+        replace: "SOLR_JAVA_HOME={{ deploy_dir }}/jre-1.8.0_25"
+
+    - name: Configure solr.in.sh (SOLR_JAVA_MEM)
+      become: yes
+      replace:
+        path: "{{ deploy_dir }}/alfresco-insight-engine/solr.in.sh"
+        regexp: "^#SOLR_JAVA_MEM.*"
+        replace: "SOLR_JAVA_MEM={{ solr_java_mem }}"
+
+    - name: Configure solr.in.sh (GC_LOG_OPTS)
+      become: yes
+      replace:
+        path: "{{ deploy_dir }}/alfresco-insight-engine/solr.in.sh"
+        regexp: "^GC_LOG_OPTS.*"
+        replace: "GC_LOG_OPTS=\"{{ solr_gc_log_opts }}\""
+
+    - name: Copy solr init script
+      become: yes
+      copy:
+        src: '{{ files_path }}/configuration/misc/solr'
+        dest: "/etc/init.d/solr"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0754
+
+    - name: Configure solr init script (solr_home)
+      become: yes
+      replace:
+        path: "/etc/init.d/solr"
+        regexp: "@@ansible_solr_home@@"
+        replace: "{{ solr_home }}"
+
+    - name: Configure solr init script (alfresco_user)
+      become: yes
+      replace:
+        path: "/etc/init.d/solr"
+        regexp: "@@ansible_alfresco_user@@"
+        replace: "{{ alfresco_user }}"
+
+    - name: Enable Solr as a service
+      become: yes
+      service:
+        name: solr
+        enabled: yes
+
+    - name: Unzip Apache Zeppelin
+      unarchive:
+        src: "{{ files_path }}/downloaded/alfresco-insight-zeppelin-1.1.0.zip"
+        dest: "{{ files_path }}/downloaded"
+        remote_src: yes
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy Zeppelin folder
+      become: yes
+      synchronize:
+        src: '{{ files_path }}/downloaded/zeppelin'
+        dest: "{{ deploy_dir }}"
+        owner: yes
+        group: yes
+        recursive: yes
+      delegate_to: "{{ inventory_hostname }}"
+
+    - name: Configure zeppelin.properties (alfresco_repository_host)
+      become: yes
+      replace:
+        path: "{{ deploy_dir }}/zeppelin/zeppelin.properties"
+        regexp: "alfresco_repository_host=localhost"
+        replace: "alfresco_repository_host={{ alfresco_host }}"
+
+    - name: Configure zeppelin.properties (alfresco_repository_port)
+      become: yes
+      replace:
+        path: "{{ deploy_dir }}/zeppelin/zeppelin.properties"
+        regexp: "alfresco_repository_port=8080"
+        replace: "alfresco_repository_port={{ alfresco_port }}"
+
+    - name: Execute substituter.sh script
+      command: "{{ deploy_dir }}/zeppelin/bin/substituter.sh"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy zeppelin init script
+      become: yes
+      copy:
+        src: '{{ files_path }}/configuration/misc/zeppelin'
+        dest: "/etc/init.d/zeppelin"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0754
+
+    - name: Configure zeppelin init script (zeppelin_home)
+      become: yes
+      replace:
+        path: "/etc/init.d/zeppelin"
+        regexp: "@@ansible_zeppelin_dir@@"
+        replace: "{{ deploy_dir }}/zeppelin"
+
+    - name: Configure zeppelin init script (alfresco_user)
+      become: yes
+      replace:
+        path: "/etc/init.d/zeppelin"
+        regexp: "@@ansible_alfresco_user@@"
+        replace: "{{ alfresco_user }}"
+
+    - name: Add JAVA_HOME to zeppelin-env.sh file
+      become : yes
+      become_user: "{{ alfresco_user }}"    
+      lineinfile:
+        path: "/opt/zeppelin/conf/zeppelin-env.sh"
+        line: "JAVA_HOME={{ zeppelin_java_home }}"
+
+    - name: Enable Zeppelin as a service
+      become: yes
+      service:
+        name: zeppelin
+        enabled: yes

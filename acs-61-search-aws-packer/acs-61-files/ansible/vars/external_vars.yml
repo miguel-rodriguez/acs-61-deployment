@@ -1,0 +1,40 @@
+deploy_dir: /opt
+
+alfresco_user: alfresco
+alfresco_group: alfresco
+alfresco_host: localhost
+alfresco_port: 8080
+
+#ansible all -i localhost, -m debug -a "msg={{ 'alfresco.123' | password_hash('sha512', 'mysecretsalt') }}"
+alfresco_user_password: "$6$mysecretsalt$O6IjrqVlF95HvaRPoK2NUPeADCoucKNncoYXiV6pVSRKmUb7Tq35HNfbeKpbKM77Dpn26Nv2Qlh0811tOGPfT0"
+alfresco_admin_password: alfresco.123
+
+#printf '%s' "alfresco.123" | iconv -t utf-16le|openssl md4| awk '{print $2}'
+alfresco_admin_password_hash: be79b8e96af24977fe0bfcf97eae488b
+
+alfresco_db_user: alfresco
+alfresco_db_pass: alfresco.123
+alfresco_db_name: alfresco61
+alfresco_db_host: localhost
+
+alfresco_root_dir: /opt/alfresco-content-services
+
+alfresco_java_opts: "-Xms512M -Xmx2048M -XX:+DisableExplicitGC -XX:+UseG1GC -XX:ReservedCodeCacheSize=128m -Djava.net.preferIPv4Stack=true"
+
+tomcat_shutdown_port: 8005
+tomcat_port: 8080
+tomcat_ssl_port: 8443
+tomcat_ajp_port: 8009
+
+solr_host: localhost
+solr_port: 8983
+solr_home: /opt/alfresco-insight-engine
+solr_java_mem: "-Xms512m -Xmx1g"
+solr_gc_log_opts: "-Xloggc:./gc.log -verbose:gc -XX:+PrintGCDateStamps -XX:+PrintGCDetails"
+
+files_path: /tmp/acs-61-files
+
+zeppelin_java_home: /opt/jre-1.8.0_25
+
+
+

@@ -1,0 +1,189 @@
+- hosts: all
+  vars_files:
+    - ../vars/external_vars.yml
+  tasks:
+    - name: Create Tomcat folder
+      file:
+        path: "{{ alfresco_root_dir }}/tomcat"
+        state: directory
+        mode: 0755
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Untar Tomcat
+      unarchive:
+        src: "{{ files_path }}/downloaded/tomcat-8.5.34.tar.gz"
+        dest: "{{ alfresco_root_dir }}/tomcat"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Create tomcat/conf/Catalina/localhost folder
+      file:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/Catalina/localhost"
+        state: directory
+        mode: 0755
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy file tomcat/bin/setenv.sh
+      copy:
+        src: '{{ files_path }}/configuration/tomcat/setenv.sh'
+        dest: "{{ alfresco_root_dir }}/tomcat/bin/setenv.sh"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat setenv.sh (alfresco_java_opts)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/bin/setenv.sh"
+        regexp: "@@ansible_alfresco_java_opts@@"
+        replace: "{{ alfresco_java_opts }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat setenv.sh (alfresco_root_dir)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/bin/setenv.sh"
+        regexp: "@@ansible_alfresco_root_dir@@"
+        replace: "{{ alfresco_root_dir }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy file tomcat/conf/catalina.properties
+      copy:
+        src: '{{ files_path }}/configuration/tomcat/catalina.properties'
+        dest: "{{ alfresco_root_dir }}/tomcat/conf/catalina.properties"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: set securePagesWithPragma=false (context.xml)
+      lineinfile:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/context.xml"
+        line: '    <Valve className="org.apache.catalina.authenticator.SSLAuthenticator" securePagesWithPragma="false" />'
+        insertbefore: '</Context>'
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy file tomcat/conf/logging.properties
+      copy:
+        src: '{{ files_path }}/configuration/tomcat/logging.properties'
+        dest: "{{ alfresco_root_dir }}/tomcat/conf/logging.properties"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy file tomcat/conf/server.xml
+      copy:
+        src: '{{ files_path }}/configuration/tomcat/server.xml'
+        dest: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat server.xml (tomcat_shutdown_port)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        regexp: "@@ansible_tomcat_shutdown_port@@"
+        replace: "{{ tomcat_shutdown_port }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat server.xml (tomcat_port)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        regexp: "@@ansible_tomcat_port@@"
+        replace: "{{ tomcat_port }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat server.xml (tomcat_ssl_port)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        regexp: "@@ansible_tomcat_ssl_port@@"
+        replace: "{{ tomcat_ssl_port }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat server.xml (tomcat_ajp_port)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        regexp: "@@ansible_tomcat_ajp_port@@"
+        replace: "{{ tomcat_ajp_port }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure tomcat server.xml (alfresco_root_dir)
+      replace:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/server.xml"
+        regexp: "@@ansible_alfresco_root_dir@@"
+        replace: "{{ alfresco_root_dir }}"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Configure Tomcat users
+      lineinfile:
+        path: "{{ alfresco_root_dir }}/tomcat/conf/tomcat-users.xml"
+        line: "{{ item }}"
+        insertbefore: '</tomcat-users>'
+      with_items:
+        - '   <user username="CN=Alfresco Repository Client, OU=Unknown, O=Alfresco Software Ltd., L=Maidenhead, ST=UK, C=GB" roles="repoclient" password="null"/>'
+        - '   <user username="CN=Alfresco Repository, OU=Unknown, O=Alfresco Software Ltd., L=Maidenhead, ST=UK, C=GB" roles="repository" password="null"/>'
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Delete not necessary tomcat webapps
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - "{{ alfresco_root_dir }}/tomcat/webapps/examples"
+        - "{{ alfresco_root_dir }}/tomcat/webapps/docs"
+        - "{{ alfresco_root_dir }}/tomcat/webapps/ROOT"
+      become_user: "{{ alfresco_user }}"
+      become: yes
+
+    - name: Copy tomcat init script
+      become: yes
+      copy:
+        src: '{{ files_path }}/configuration/tomcat/tomcat-init-script'
+        dest: "/etc/init.d/tomcat"
+        remote_src: yes
+        owner: root
+        group: root
+        mode: 0754
+
+
+    - name: Configure tomcat init script (alfresco_root_dir)
+      replace:
+        path: "/etc/init.d/tomcat"
+        regexp: "@@ansible_alfresco_root_dir@@"
+        replace: "{{ alfresco_root_dir }}"
+      become: yes
+
+
+    - name: Creates directory
+      become: yes
+      file:
+        path: "{{ alfresco_root_dir }}/tomcat/shared/lib"
+        state: directory
+        
+    - name: Enable Tomcat as a service
+      service:
+        name: tomcat
+        enabled: yes
+      become: yes

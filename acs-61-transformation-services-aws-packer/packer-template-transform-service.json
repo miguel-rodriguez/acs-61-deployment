@@ -1,0 +1,74 @@
+{
+  "variables": {
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "vpc_region": "",
+    "vpc_id": "",
+    "vpc_public_sn_id": "",
+    "source_ami": "",
+    "instance_type": "",
+    "ssh_username": "",
+    "nexus_user": "{{env `nexus_user`}}",
+    "nexus_password": "{{env `nexus_password`}}"
+  },
+  "sensitive-variables": ["nexus_user", "nexus_password"],
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "access_key": "",
+      "secret_key": "",
+      "region": "{{user `vpc_region`}}",
+      "vpc_id": "{{user `vpc_id`}}",
+      "subnet_id": "",
+      "associate_public_ip_address": false,
+      "security_group_id": "",
+      "source_ami": "{{user `source_ami`}}",
+      "instance_type": "{{user `instance_type`}}",
+      "ssh_username": "{{user `ssh_username`}}",
+      "ami_name": "{{user `ami_name`}}-{{ timestamp }}",
+      "ami_groups": "",
+      "launch_block_device_mappings": [
+        {
+          "device_name": "/dev/sda1",
+          "volume_type": "gp2",
+          "volume_size": "30",
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+  
+        "yum install -y ansible",
+        "mkdir -p /var/tmp/ansible/downloaded",
+        "mkdir -p /var/tmp/ansible/misc",
+        "chmod -R 777 /var/tmp/ansible"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell"
+    },
+    {
+      "type": "file",
+      "source": "acs-61-files/configuration/misc/transformation-init-script",
+      "destination": "/var/tmp/ansible/misc/transformation-init-script"
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "./acs-61-files/ansible/transform-service-image.yaml",
+      "playbook_dir": "./acs-61-files/ansible",
+      "extra_arguments": [
+        "--become","--extra-vars \"nexus_user={{ user `nexus_user` }}   nexus_password={{ user `nexus_password` }}\""
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "manifest",
+      "output": "manifest.json",
+      "strip_path": true
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+- hosts: all
+  vars_files:
+    - ../vars/external_vars.yml
+  tasks:
+    - name: Create alfresco user
+      user:
+        name: "{{ alfresco_user }}"
+        shell: /bin/bash
+        password: "{{ alfresco_user_password }}"
+        generate_ssh_key: yes
+        ssh_key_file: ".ssh/id_rsa"
+      become: yes
+
+    - name: Create alfresco folder
+      file:
+        path: "{{ alfresco_root_dir }}"
+        state: directory
+        mode: 0755
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become: yes
+
+    - name: Unzip alfresco-content-services-distribution-6.1.0.zip
+      unarchive:
+        src: '{{ files_path }}/downloaded/alfresco-content-services-distribution-6.1.0.zip'
+        dest: "{{ alfresco_root_dir }}"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+        creates: '{{ alfresco_root_dir }}/web-server/webapps/alfresco.war'
+      become: yes
+      become_user: "{{ alfresco_user }}"
+
+    - name: Change distribution file ownership to alfresco user
+      file:
+        path: '/tmp/acs-61-files'
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+        mode: 0755
+        recurse: yes
+      become: yes
+      
+    - name: Creates other Alfresco folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0755
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      with_items:
+        - "{{ alfresco_root_dir }}/modules/platform"
+        - "{{ alfresco_root_dir }}/modules/share"
+        - "{{ alfresco_root_dir }}/alf_data/contentstore"
+        - "{{ alfresco_root_dir }}/alf_data/contentstore.deleted"
+        - "{{ alfresco_root_dir }}/alf_data/solr6Backup/alfresco"
+        - "{{ alfresco_root_dir }}/alf_data/solr6Backup/archive"
+        - "{{ alfresco_root_dir }}/scripts"
+        - "{{ alfresco_root_dir }}/common"
+        - "{{ deploy_dir }}/jre-1.8.0_25"
+      become: yes
+
+    - name: Copy file setenv.sh
+      copy:
+        src: '{{ files_path }}/configuration/misc/setenv.sh'
+        dest: "{{ alfresco_root_dir }}/scripts/setenv.sh"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become: yes
+
+    - name: Configure setenv.sh
+      replace:
+        path: "{{ alfresco_root_dir }}/scripts/setenv.sh"
+        regexp: "@@ansible_alfresco_root_dir@@"
+        replace: "{{ alfresco_root_dir }}"
+      become: yes
+
+    - name: Copy file build-setenv.sh
+      copy:
+        src: '{{ files_path }}/configuration/misc/build-setenv.sh'
+        dest: "{{ alfresco_root_dir }}/scripts/build-setenv.sh"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become: yes
+
+    - name: Configure build-setenv.sh
+      replace:
+        path: "{{ alfresco_root_dir }}/scripts/build-setenv.sh"
+        regexp: "@@ansible_alfresco_root_dir@@"
+        replace: "{{ alfresco_root_dir }}"
+      become: yes
+
+    - name: Install ImageMagick
+      yum:
+        name: '{{ packages }}'
+        state: present
+      vars:
+        packages:
+          - '{{ files_path }}/downloaded/imagemagick-distribution-7.0.7-27-libs-linux.rpm'
+          - '{{ files_path }}/downloaded/imagemagick-distribution-7.0.7-27-linux.rpm'
+      become: yes
+
+    - name: unzip LibreOffice
+      unarchive:
+        src: '{{ files_path }}/downloaded/libreoffice-dist-5.4.6-linux.gz'
+        dest: "{{ files_path }}/downloaded"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+        creates: '{{ files_path }}/downloaded/LibreOffice_5.4.6.2_Linux_x86-64_rpm'
+      become: yes
+
+    - name: install LibreOffice in temporary location
+      command: '{{ files_path }}/downloaded/LibreOffice_5.4.6.2_Linux_x86-64_rpm/install \
+          {{ files_path }}/downloaded/LibreOffice_5.4.6.2_Linux_x86-64_rpm {{ files_path }}/downloaded'
+      become_user: "{{ alfresco_user }}"
+      become: yes
+      args:
+        creates: '{{ files_path }}/downloaded/opt/libreoffice5.4'
+
+    - name: copy Libreoffice to Alfresco folder
+      synchronize:
+        src: '{{ files_path }}/downloaded/opt/libreoffice5.4'
+        dest: "{{ alfresco_root_dir }}"
+        owner: yes
+        group: yes
+        recursive: yes
+      delegate_to: "{{ inventory_hostname }}"
+      become: yes
+
+    - name: Untar alfresco-pdf-renderer
+      unarchive:
+        src: "{{ alfresco_root_dir }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-linux.tgz"
+        dest: "{{ alfresco_root_dir }}/alfresco-pdf-renderer"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+        creates: "{{ alfresco_root_dir }}/alfresco-pdf-renderer/alfresco-pdf-renderer"
+      register: alfresco_pdf_renderer
+      become: yes
+
+    - name: Clean alfresco-pdf-renderer files
+      file:
+        state: absent
+        path: "{{ item }}"
+      with_items:
+        - "{{ alfresco_root_dir }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-linux.tgz"
+        - "{{ alfresco_root_dir }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-win64.tgz"
+      when: alfresco_pdf_renderer.failed == false
+      become: yes
+
+    - name: Untar java (openjdk 11.0.1)
+      unarchive:
+        src: "{{ files_path }}/downloaded/openjdk-11.0.1_linux-x64_bin.tar.gz"
+        dest: "{{ alfresco_root_dir }}"
+        remote_src: yes
+        creates: "{{ alfresco_root_dir }}/jdk-11.0.1"
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      register: jdk_folder
+      become: yes
+
+    - name: Untar java (Jre 1.8)
+      unarchive:
+        src: "{{ files_path }}/downloaded/jre-1.8.0_25-linux.tgz"
+        dest: "{{ deploy_dir }}/jre-1.8.0_25/"
+        remote_src: yes
+        creates: "{{ deploy_dir }}/jre-1.8.0_25/bin/java"
+        extra_opts: [--strip-components=1]
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become: yes
+
+    - name: Create java folder link
+      file:
+        src: "{{ alfresco_root_dir }}/jdk-11.0.1"
+        dest: "{{ alfresco_root_dir }}/java"
+        state: link
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      when: jdk_folder.failed == false
+      become: yes

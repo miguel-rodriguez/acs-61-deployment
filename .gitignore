@@ -1,0 +1,12 @@
+acs-61-aws-terraform/terraform.tfstate
+acs-61-aws-terraform/terraform.tfstate.backup
+.terraform.tfstate.lock.info
+acs-61-aws-terraform/.terraform
+acs-61-repo-aws-packer/build.log
+acs-61-search-aws-packer/build.log
+acs-61-repo-aws-packer/ami.out
+acs-61-search-aws-packer/ami.out
+acs-61-repo-aws-packer/manifest.json
+acs-61-search-aws-packer/manifest.json
+acs-61-repo-aws-packer/manifest.json
+acs-61-repo-aws-packer/acs-61-files/downloaded/digital-workspace.war

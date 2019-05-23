@@ -1,0 +1,12 @@
+- hosts: all
+  vars_files:
+    - ../vars/external_vars.yml
+  tasks:
+    - name: Copy file digital-workspace.war to tomcat/webbaps
+      copy:
+        src: '{{ files_path }}/downloaded/digital-workspace.war'
+        dest: "{{ alfresco_root_dir }}/tomcat/webapps/digital-workspace.war"
+        remote_src: yes
+        owner: "{{ alfresco_user }}"
+        group: "{{ alfresco_group }}"
+      become: yes

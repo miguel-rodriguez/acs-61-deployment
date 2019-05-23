@@ -1,0 +1,11 @@
+{
+    "aws_access_key": "",
+    "aws_secret_key": "",
+    "vpc_region": "eu-west-2",
+    "vpc_id": "vpc-631dfd0a",
+    "vpc_public_sn_id": "",
+    "source_ami": "ami-00846a67",
+    "instance_type": "m4.2xlarge",
+    "ami_name": "acs-61-repo",
+    "ssh_username": "centos"
+}

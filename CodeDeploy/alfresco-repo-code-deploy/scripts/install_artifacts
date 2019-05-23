@@ -1,0 +1,40 @@
+#!/bin/bash
+set -x
+
+echo "user id is: "`id`
+
+# ACS root dir
+export acs_root_dir="/opt/alfresco-content-services"
+export acs_deployment_files="/tmp/code-deploy-acs"
+
+# Create module folders in they don't exist
+if [[ ! -e ${acs_root_dir}/modules/platform ]]; then
+    mkdir -p ${acs_root_dir}/modules/platform 
+fi
+
+if [[ ! -e ${acs_root_dir}/modules/share ]]; then
+    mkdir -p ${acs_root_dir}/modules/share 
+fi
+
+# Set permissions
+chown -R alfresco:alfresco ${acs_root_dir}/modules
+chown -R alfresco:alfresco ${acs_deployment_files}
+
+# Deploy artifacts
+cp ${acs_deployment_files}/amps/* ${acs_root_dir}/amps/
+cp ${acs_deployment_files}/amps_share/* ${acs_root_dir}/amps_share/
+cp ${acs_deployment_files}/platform_modules/* ${acs_root_dir}/modules/platform/
+cp ${acs_deployment_files}/share_modules/* ${acs_root_dir}/modules/share/
+# Deploy alfresco-global.properties
+cp ${acs_deployment_files}/config_files/alfresco-global.properties ${acs_root_dir}/tomcat/shared/classes/alfresco-global.properties
+
+# Apply new artifacts
+cd ${acs_root_dir}
+chmod +x ./bin/apply_amps.sh
+./bin/apply_amps.sh -force
+
+# Deploy config files
+cp ${acs_deployment_files}/config_files/share-config-custom.xml ${acs_root_dir}/tomcat/shared/classes/alfresco/web-extension/
+
+# Tidy up
+sudo rm -rf /tmp/code-deploy-acs

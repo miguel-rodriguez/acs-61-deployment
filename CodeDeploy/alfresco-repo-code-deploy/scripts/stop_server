@@ -1,0 +1,5 @@
+#!/bin/bash
+sudo service tomcat stop || true
+ps -ef | grep "/opt/alfresco-content-services/java" | awk '{print $2}' | xargs kill -9 || true
+
+

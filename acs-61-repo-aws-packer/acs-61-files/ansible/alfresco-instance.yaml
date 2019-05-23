@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: packages are installed
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - unzip
+          #- libwmf-lite.x86_64
+- import_playbook: tasks/alfresco.yaml
+- import_playbook: tasks/tomcat.yaml
+- import_playbook: tasks/alfresco-tomcat-conf.yaml
+- import_playbook: tasks/digital-workspace.yaml

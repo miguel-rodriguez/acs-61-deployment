@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: true
+  tasks:
+    - name: packages are installed
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - unzip
+          - fontconfig
+          - libICE.x86_64
+          - libSM.x86_64
+          - libXrender.x86_64
+          - libXext.x86_64
+          - libXinerama.x86_64
+          - cups-libs.x86_64
+          - mesa-libGLU.x86_64
+          - cairo.x86_64
+          - dbus-glib-devel.x86_64
+          #- libwmf-lite.x86_64
+- import_playbook: tasks/alfresco.yaml
+- import_playbook: tasks/tomcat.yaml
+- import_playbook: tasks/alfresco-tomcat-conf.yaml
+- import_playbook: tasks/insight-engine.yaml
