@@ -11,7 +11,6 @@ This project is a POC for the deployment of ACS (Alfresco Content Services) 6.1 
 Please make sure your Alfresco license subscription entitles you to install and run ACS 6.1 Enterprise and Alfresco Search Services with Insight Engine.
 
 
-
 The final ACS architecture looks like this:
 
 ![alt text](images/AlfrescoNetworkDiagram.jpg)
@@ -73,16 +72,14 @@ For this process we use Packer and Ansible. We first export the "nexus_user" and
 >export nexus_password=xxxxxxxxx
 
 
-
-
 Note that the .nexus-cfg file is in the user home folder, keep this file and its contents private and secured at all times.
-
 
 
 If you want to include custom amps add them to the amps and amps_share folder and they will be deployed to the AMI.
 
 For custom jar files add them to the modules/platform and modules/share folders.
 
+The repository Packer deployment expects to have the `digital-workspace.war` file in the `acs-61-files/downloaded` folder since this fine is not available in Nexus yet. Please place the file there before building the repo image or comment out the task in the `ansible\alfresco-instance.yaml` file.
 
 
 We can now execute packer by calling the build_61_AMI.sh script.
@@ -227,5 +224,4 @@ There are a couple of things to add to this project:
 
 - CI/CD scripts - I have already implemented this and will document it accordingly.
 - On the Search Services instances we should download a backup of the Solr indexes when starting a new instance instead of building the indexes from scratch.
-- Create a new AMI to run Alfresco Transformation Services (Tika, Libreoffice, PDF Renderer, etc) instead of running them on the Search Services nodes. This will provide better performance and scalability for transformations.
 
