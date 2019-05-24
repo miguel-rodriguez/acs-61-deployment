@@ -10,7 +10,7 @@ autoscaling-group-key-name = "MiguelRodriguezLondon"
 s3-bucket-location = "eu-west-2"
 cachedcontent-ebs-volume-size = "50"
 ### Alfresco Repo variables ###
-autoscaling-repo-group-image-id = "ami-03fb307f1f4c3788e"
+autoscaling-repo-group-image-id = "ami-05ef8434cdba67b45"
 autoscaling-repo-group-instance-type = "m4.xlarge"
 autoscaling-repo-group-max-size = "2"
 autoscaling-repo-group-desired-capacity = "1"
@@ -33,7 +33,7 @@ image-magick-port=8092
 tika-port=8093
 shared-file-store-port=8094
 ### Transformation Service variables ###
-autoscaling-ts-group-image-id = "ami-0a0dfcea357602c1d"
+autoscaling-ts-group-image-id = "ami-0d3bd15c5b3145304"
 autoscaling-ts-group-instance-type = "m4.xlarge"
 autoscaling-ts-group-max-size = "2"
 autoscaling-ts-group-desired-capacity = "1"

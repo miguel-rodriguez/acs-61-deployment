@@ -72,8 +72,8 @@ resource "aws_launch_configuration" "ts-lcfg" {
     # mount efs
     sudo yum install -y nfs-utils
     sudo mkdir ${var.ansible_shared_file_store_path}
-    sudo chown ${var.ansible_alfresco_user}:${var.ansible_alfresco_user} ${var.ansible_shared_file_store_path}
     sudo mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${local.efs_dns}:/ /opt/efs
+    sudo chown -R ${var.ansible_alfresco_user}:${var.ansible_alfresco_user} ${var.ansible_shared_file_store_path}
     sudo sed -i 's/@@ansible_activemq_url@@/failover:(${var.mq-ssl-endpoint-1},${var.mq-ssl-endpoint-2})?timeout=30000/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_alfresco_user@@/${var.ansible_alfresco_user}/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_libreoffice_port@@/${var.ansible_libreoffice_port}/g' /etc/init.d/transformation
@@ -86,20 +86,14 @@ resource "aws_launch_configuration" "ts-lcfg" {
     sudo sed -i 's/@@ansible_tika_java_mem_opts@@/${var.ansible_tika_java_mem_opts}/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_shared_file_store_port@@/${var.ansible_shared_file_store_port}/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_shared_file_store_java_mem_opts@@/${var.ansible_shared_file_store_java_mem_opts}/g' /etc/init.d/transformation
-    sudo sed -i 's/@@ansible_shared_file_store_path@@/${var.ansible_shared_file_store_path}/g' /etc/init.d/transformation
+    sudo sed -i 's#@@ansible_shared_file_store_path@@#${var.ansible_shared_file_store_path}#g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_transform_router_port@@/${var.ansible_transform_router_port}/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_transform_router_java_mem_opts@@/${var.ansible_transform_router_java_mem_opts}/g' /etc/init.d/transformation
-    sudo sed -i 's/@@ansible_shared_file_store_path@@/${var.ansible_shared_file_store_path}/g' /etc/init.d/transformation
-    sudo sed -i 's/@@ansible_activemq_url@@/${local.mq_failover}/g' /etc/init.d/transformation
+    sudo sed -i 's#@@ansible_activemq_url@@#${local.mq_failover}#g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_activemq_user@@/${var.mq-user}/g' /etc/init.d/transformation
     sudo sed -i 's/@@ansible_activemq_password@@/${var.mq-password}/g' /etc/init.d/transformation
-
-
-
-declare -x ACTIVEMQ_PASSWORD="admin"
-declare -x ACTIVEMQ_URL="nio://wobbly-kitten-activemq-broker:61616"
-declare -x ACTIVEMQ_USER="admin"
-
+    chkconfig transformation on
+    service transformation start
     ### enable code deploy ###
     REGION=$(curl 169.254.169.254/latest/meta-data/placement/availability-zone/ | sed 's/[a-z]$//')
     sudo yum update -y
