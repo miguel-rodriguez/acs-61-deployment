@@ -60,7 +60,7 @@ resource "aws_security_group" "alfresco-ts-sg" {
 
 # Launch configuration #
 resource "aws_launch_configuration" "ts-lcfg" {
-  name = "${var.resource-prefix}-ts-lcfg"
+  name_prefix   = "${var.resource-prefix}-ts-lcfg"
   image_id = "${var.autoscaling-group-image-id}"
   instance_type = "${var.autoscaling-group-instance-type}"
   key_name = "${var.autoscaling-group-key-name}"
@@ -131,6 +131,7 @@ resource "aws_autoscaling_group" "ts-asg" {
     value = "${var.resource-prefix}-alfresco-ts"
     propagate_at_launch = true
   }
+  depends_on = ["aws_autoscaling_group.ts-asg"]
 }
 
 # Connect applications to the Load Balancer

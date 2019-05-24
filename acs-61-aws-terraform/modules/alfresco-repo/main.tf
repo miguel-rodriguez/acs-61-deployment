@@ -60,7 +60,7 @@ resource "aws_security_group" "alfresco-sg" {
 
 # Launch configuration #
 resource "aws_launch_configuration" "repo-lcfg" {
-  name = "${var.resource-prefix}-repo-lcfg"
+  name_prefix   = "${var.resource-prefix}-repo-lcfg"
   image_id = "${var.autoscaling-group-image-id}"
   instance_type = "${var.autoscaling-group-instance-type}"
   iam_instance_profile = "${aws_iam_instance_profile.alfresco-repo-profile.id}"

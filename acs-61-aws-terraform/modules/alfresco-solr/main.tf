@@ -68,7 +68,7 @@ resource "aws_security_group" "alfresco-solr-sg" {
 
 # Launch configuration #
 resource "aws_launch_configuration" "solr-lcfg" {
-  name = "${var.resource-prefix}-solr-lcfg"
+  name_prefix   = "${var.resource-prefix}-solr-lcfg"
   image_id = "${var.autoscaling-group-image-id}"
   instance_type = "${var.autoscaling-group-instance-type}"
   iam_instance_profile = "${aws_iam_instance_profile.alfresco-solr-profile.id}"
