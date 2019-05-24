@@ -79,8 +79,7 @@ If you want to include custom amps add them to the amps and amps_share folder an
 
 For custom jar files add them to the modules/platform and modules/share folders.
 
-The repository Packer deployment expects to have the `digital-workspace.war` file in the `acs-61-files/downloaded` folder since this fine is not available in Nexus yet. Please place the file there before building the repo image or comment out the task in the `ansible\alfresco-instance.yaml` file.
-
+If you want to deploy ADW (Alfresco Digital Workspace) place the `digital-workspace.war` file in the `acs-61-files/downloaded` folder.
 
 We can now execute packer by calling the build_61_AMI.sh script.
 

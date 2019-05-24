@@ -2,6 +2,12 @@
   vars_files:
     - ../vars/external_vars.yml
   tasks:
+
+    - name: Check digital-workspace.war exists
+      stat:
+        path: '{{ files_path }}/downloaded/digital-workspace.war'
+      register: ADW
+
     - name: Copy file digital-workspace.war to tomcat/webbaps
       copy:
         src: '{{ files_path }}/downloaded/digital-workspace.war'
@@ -10,3 +16,4 @@
         owner: "{{ alfresco_user }}"
         group: "{{ alfresco_group }}"
       become: yes
+      when: ADW.stat.exists == True
