@@ -1,0 +1,16 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build Platform') {
+            steps {
+                sh 'export PACKER_LOG=1'
+                sh 'export PACKER_LOG_PATH=/home/miguel/opt/terraform/acs-61-deployment/acs-61-repo-aws-packer/build.log'
+                sh 'cd /home/miguel/opt/terraform/acs-61-deployment/acs-61-repo-aws-packer'
+                sh './build-ACS-61-Repo-AMI.sh'
+                sh 'grep ami build.log | tail -1 | awk \'{print $2}\' > ami.out'
+                sh 'echo "Replacing AMI" `cat ami.out` "in terraform.tfvars"'
+                sh 'head ami.out | xargs -I {} sed -E -i \'s/autoscaling-repo-group-image-id.*$/autoscaling-repo-group-image-id = "{}"/g\' ../acs-61-aws-terraform/terraform.tfvars'
+            }
+        }
+    }
+}
