@@ -54,7 +54,7 @@ pipeline {
                 )
             }
         }
-        stage("Build AWS Infrastructure with ACS 6.1") {
+        stage("Deploy ACS 6.1") {
             steps {
                 sh '''
                 cd acs-61-aws-terraform
