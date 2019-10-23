@@ -36,6 +36,20 @@ pipeline {
                         echo "Replacing AMI" `cat ami.out` "in terraform.tfvars"
                         head ami.out | xargs -I {} sed -E -i \'s/autoscaling-ts-group-image-id.*$/autoscaling-ts-group-image-id = "{}"/g\' ../acs-61-aws-terraform/terraform.tfvars
                         '''
+                    },
+                    "Build AWS Infrastructure" : {
+                        sh '''
+                        cd acs-61-aws-terraform
+                        /usr/local/bin/terraform-11-08 init
+                        echo yes | /usr/local/bin/terraform-11-08 apply \
+                        -target=module.vpc \
+                        -target=module.rds \
+                        -target=module.bastion \
+                        -target=module.alb \
+                        -target=module.nlb \
+                        -target=module.activemq \
+                        -target=module.efs
+                        '''
                     }                    
                 )
             }
@@ -45,7 +59,10 @@ pipeline {
                 sh '''
                 cd acs-61-aws-terraform
                 /usr/local/bin/terraform-11-08 init
-                echo yes | /usr/local/bin/terraform-11-08 apply
+                echo yes | /usr/local/bin/terraform-11-08 apply \
+                -target=module.alfresco-repo \
+                -target=module.alfresco-solr \
+                -target=module.transformation-service
                 '''
             }
         }
