@@ -5,11 +5,10 @@ node { git url: 'https://github.com/miguel-rodriguez/acs-61-deployment.git', bra
 pipeline {
     agent any
     stages {
-        stage('Build AMIs') {
+        stage('Destroy AWS Infrastructure and ACS61') {
             steps {
                 sh '''
                 cd acs-61-aws-terraform
-                /usr/local/bin/terraform-11-08 init
                 echo yes | /usr/local/bin/terraform-11-08 destroy
                 '''
             }
